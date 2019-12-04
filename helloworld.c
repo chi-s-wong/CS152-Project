@@ -91,7 +91,6 @@ void run_game();
 void play_speed_game();
 void play_memory_game();
 void query_replay(int loss);
-int readKeyPad_timed(unsigned long long time);
 
 
 int main()
@@ -115,14 +114,13 @@ int main()
 	run_game();
 
 	// play_speed_game();
-	//keypad_ssd_test();
+	// keypad_ssd_test();
 
 
     return 0;
 
 
 }
-
 
 void run_game()
 {
@@ -133,7 +131,6 @@ void run_game()
 	while (1) {
 //		if (j >= 1000) rand_num++;
 //		else j++;
-
 		rand_num++;
 		int press = readKeyPad_timed(1);
 		//printf("rand_num: %d\n", rand_num);
@@ -161,7 +158,6 @@ void uusleep(unsigned int useconds)
 
 void play_speed_game()
 {
-
 	print("Would you like to go (1) slow or (2) fast?\n");
 	int speed_select = -1;
 
@@ -267,35 +263,6 @@ void play_memory_game()
 			//query_replay();
 		}
 	}
-
-	/* 	
-	for (i = 0; i < 5; i++) {
-	 	random_numbers_easy[i] = rand()%9 + 1;
-	}
-
-	for (i = 0; i < 5; i++)
-	{
-		displaySSD(random_numbers_easy[i]);
-		uusleep(1000000);
-	}
-	displaySSD(10); // turn off display
-
-	int answers[5];
-	for (i = 0; i< 5; i++)
-	{
-		int press = readKeyPad();
-		answers[i] = press;
-	}
-
-	for (i = 0; i < 5; i++)
-	{
-		if (answers[i] != random_numbers_easy[i])
-		{
-			print("WRONG ANSWERS");
-			return;
-		}
-	}
-	*/
 
 	query_replay(loss);
 	return;
@@ -496,5 +463,3 @@ void displaySSD(int x) {
 //XGpio_DiscreteWrite(&sGpio, 1, 0b00111000);
 
 //XGpio_DiscreteWrite(&sGpio, 1, 0b00011100);
-//int G_1 = 0b00111000;
-//int G_2 = 0b00011000;
