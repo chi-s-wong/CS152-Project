@@ -112,9 +112,9 @@ int main()
 	}
 	XGpio_SetDataDirection(&KeypadGpio, KEYPAD_CHANNEL, 0x0f); // Input
 	run_game();
-	// play_speed_game();
 
-	//keypad_ssd_test();
+	// play_speed_game();
+	// keypad_ssd_test();
 
 
     return 0;
@@ -164,35 +164,138 @@ void uusleep(unsigned int useconds)
 
 void play_speed_game()
 {
+	print("Would you like to go (1) slow or (2) fast?");
+	int speed_select = -1;
+	while (speed_select = readKeyPad_timed(1000) == -1) {
+		if (readKeyPad_timed(1) == 1) {
+			speed_select = 2000;
+		}
+		else if (readKeyPad_timed(1) == 2) {
+			speed_select = 500;
+		}
+	}
+	if (speed_select == -1) {
+		speed_select = 2000;
+	}
 	int cur;
 	int i;
 	for (i = 0; i < 10; i++)
 	{
 		cur = rand()%9 + 1;
 		displaySSD(cur);
-		if (readKeyPad_timed(1000) == cur)
+		if (readKeyPad_timed(speed_select) == cur)
 		{
-			print("YOU WIN THIS ROUND");
-		}else
+			print("YOU WIN THIS ROUND\n");
+		}
+		else
 		{
-			print("LOSER");
+			print("YOU LOST!\n");
 			return;
 		}
 
 	}
-	/*
-	if (readKeyPad_timed(500) == -1) {
-		print("You waited too long");
+}
+
+void play_memory_game()
+{
+	int random_numbers_easy[5];
+	int random_numbers_hard[9];
+
+	int answers_easy[5];
+	int answers_hard[9];
+
+	print("(1) Easy or (2) Hard?");
+	int diff_select = -1;
+	while (diff_select = readKeyPad_timed(1000) == -1) {
+		if (readKeyPad_timed(1) == 1) {
+			diff_select = 0;
+		}
+		else if (readKeyPad_timed(1) == 2) {
+			diff_select = 1;
+		}
 	}
-	else {
-		print("Pressed Keypad");
-	}*/
+	if (diff_select == -1) {
+		diff_select = 0;
+	}
+
+	int arr_length = diff_select ? 9 : 5;
+	int *random_numbers = diff_select ? random_numbers_hard : random_numbers_easy;
+	int *answers = diff_select ? answers_hard : answers_easy;
+	
+	int i;
+
+	for (i = 0; i < arr_length; i++) {
+		random_numbers[i] = rand()%9 + 1;
+	}
+
+	for (i = 0; i < arr_length; i++)
+	{
+		displaySSD(random_numbers[i]);
+		uusleep(1000000);
+	}
+	displaySSD(10); // turn off display
+
+	for (i = 0; i< arr_length; i++)
+	{
+		int press = readKeyPad();
+		answers[i] = press;
+	}
+
+	for (i = 0; i < arr_length; i++)
+	{
+		if (answers[i] != random_numbers[i])
+		{
+			print("WRONG ANSWERS");
+			return;
+		}
+	}
+
+	/* 	
+	for (i = 0; i < 5; i++) {
+	 	random_numbers_easy[i] = rand()%9 + 1;
+	}
+
+	for (i = 0; i < 5; i++)
+	{
+		displaySSD(random_numbers_easy[i]);
+		uusleep(1000000);
+	}
+	displaySSD(10); // turn off display
+
+	int answers[5];
+	for (i = 0; i< 5; i++)
+	{
+		int press = readKeyPad();
+		answers[i] = press;
+	}
+
+	for (i = 0; i < 5; i++)
+	{
+		if (answers[i] != random_numbers_easy[i])
+		{
+			print("WRONG ANSWERS");
+			return;
+		}
+	}
+	*/
+
+	print("YOU WIN");
+	return;
 }
 
 
+void keypad_ssd_test()
+{
+	print("Press the keypad :)\n");
+	while(1)
+	{
+		int display_me = readKeyPad();
+		displaySSD(display_me);
+	}
+}
+
 //500 ~ 1 second
 int readKeyPad_timed(unsigned long long time) {
-	int j;
 	unsigned long long i = 0;
 	unsigned long long time_limit = 15*time;
 	while(i < time_limit) {
@@ -251,62 +354,9 @@ int readKeyPad_timed(unsigned long long time) {
 			print("Key pressed is 9\n");
 			return 9;
 		}
-		//for (j = 0; j<15; j++)
-		//asm("nop");
 		i++;
-		//if (j >= 1000) i++;
-		//else j++;
 	}
 	return -1;
-}
-
-
-void play_memory_game()
-{
-	int random_numbers_easy[5];
-	int random_numbers_hard[9];
-
-
-	int i;
-	for (i = 0; i < 5; i++) {
-		random_numbers_easy[i] = rand()%9 + 1;
-	}
-
-	for (i = 0; i < 5; i++)
-	{
-		displaySSD(random_numbers_easy[i]);
-		uusleep(1000000);
-	}
-	displaySSD(10); // turn off display
-
-	int answers[5];
-	for (i = 0; i< 5; i++)
-	{
-		int press = readKeyPad();
-		answers[i] = press;
-	}
-
-	for (i = 0; i < 5; i++)
-	{
-		if (answers[i] != random_numbers_easy[i])
-		{
-			print("WRONG ANSWERS");
-			return;
-		}
-	}
-	print("YOU WIN");
-	return;
-}
-
-
-void keypad_ssd_test()
-{
-	print("Press the keypad :)\n");
-	while(1)
-	{
-		int display_me = readKeyPad();
-		displaySSD(display_me);
-	}
 }
 
 
