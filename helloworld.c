@@ -166,12 +166,12 @@ void play_speed_game()
 {
 	print("Would you like to go (1) slow or (2) fast?");
 	int speed_select = -1;
-	while (speed_select = readKeyPad_timed(1000) == -1) {
+	while (speed_select = readKeyPad_timed(100000) == -1) {
 		if (readKeyPad_timed(1) == 1) {
-			speed_select = 2000;
+			speed_select = 2000; // 4 seconds for input
 		}
 		else if (readKeyPad_timed(1) == 2) {
-			speed_select = 500;
+			speed_select = 500; // 1 second for input
 		}
 	}
 	if (speed_select == -1) {
@@ -206,7 +206,7 @@ void play_memory_game()
 
 	print("(1) Easy or (2) Hard?");
 	int diff_select = -1;
-	while (diff_select = readKeyPad_timed(1000) == -1) {
+	while (diff_select = readKeyPad_timed(100000) == -1) {
 		if (readKeyPad_timed(1) == 1) {
 			diff_select = 0;
 		}
