@@ -64,6 +64,8 @@ void print(char *str);
 #define DISPLAY_AB (1 << 6)
 #define DISPLAY_AA (1 << 7)
 
+#define DISPLAY_OFF  0
+
 #define DISPLAY_0 (DISPLAY_AA | DISPLAY_AB | DISPLAY_AC | DISPLAY_AD | DISPLAY_AE | DISPLAY_AF)
 #define DISPLAY_1 (DISPLAY_AB | DISPLAY_AC)
 #define DISPLAY_2 (DISPLAY_AA | DISPLAY_AB | DISPLAY_AD | DISPLAY_AE | DISPLAY_AG)
@@ -75,7 +77,7 @@ void print(char *str);
 #define DISPLAY_8 (~DISPLAY_C)
 #define DISPLAY_9 (DISPLAY_AA | DISPLAY_AB | DISPLAY_AC | DISPLAY_AD | DISPLAY_AF | DISPLAY_AG)
 
-
+#define INT_MAX 2147483600
 XGpio KeypadGpio;
 XGpio sGpio;
 
@@ -84,6 +86,13 @@ int Status;
 int readKey();
 int readKeyPad();
 void displaySSD(int x);
+void keypad_ssd_test();
+void run_game();
+void play_speed_game();
+void play_memory_game();
+void query_replay(int loss);
+int readKeyPad_timed(unsigned long long time);
+
 
 int main()
 {
@@ -97,25 +106,16 @@ int main()
 	}
 	XGpio_SetDataDirection(&sGpio, 1, 0); // Output
 
-	displaySSD(1);
-
-
-
-
 	// Initialize Keypad
 	Status = XGpio_Initialize(&KeypadGpio, KEYPAD_DEVICE_ID);
 	if (Status != XST_SUCCESS) {
 		exit(1);
 	}
 	XGpio_SetDataDirection(&KeypadGpio, KEYPAD_CHANNEL, 0x0f); // Input
+	run_game();
 
-
-	print("Press the keypad :)\n");
-	while(1)
-	{
-		int display_me = readKeyPad();
-		displaySSD(display_me);
-	}
+	// play_speed_game();
+	//keypad_ssd_test();
 
 
     return 0;
@@ -124,61 +124,314 @@ int main()
 }
 
 
+void run_game()
+{
+	print("Do you want to play a (1) speed game or a (2) memory game?\n");
+	displaySSD(10);
+	int j = 0;
+	unsigned int  rand_num = 0;
+	while (1) {
+//		if (j >= 1000) rand_num++;
+//		else j++;
+
+		rand_num++;
+		int press = readKeyPad_timed(1);
+		//printf("rand_num: %d\n", rand_num);
+		if(rand_num >= INT_MAX) rand_num = 0;
+		if (press == 1) {
+			//printf("rand_num: %d\n", rand_num);
+			srand(rand_num);
+			play_speed_game();
+		}
+		else if (press == 2) {
+			//printf("rand_num: %d\n", rand_num);
+			srand(rand_num);
+			play_memory_game();
+		}
+	}
+
+}
+
+void uusleep(unsigned int useconds)
+{
+	int i,j;
+	for (j = 0; j <useconds; j++)
+		for (i = 0; i<15; i++) asm("nop");
+}
+
+void play_speed_game()
+{
+
+	print("Would you like to go (1) slow or (2) fast?\n");
+	int speed_select = -1;
+
+	while (speed_select == -1) {
+		int press = readKeyPad_timed(1);
+		if (press == 1) {
+			speed_select = 2000; // 4 seconds for input
+		}
+		else if (press == 2) {
+			speed_select = 500; // 1 second for input
+		}
+	}
+
+	print("Press the numbers you see as fast as you can!\n");
+
+	int cur;
+	int loss = 0;
+	int i;
+	for (i = 0; i < 10; i++)
+	{
+		cur = rand()%9 + 1;
+		displaySSD(cur);
+		if (readKeyPad_timed(speed_select) != cur)
+		{
+			loss = 1;
+			break;
+		}
+
+	}
+	query_replay(loss);
+}
+
+void query_replay(int loss)
+{
+	displaySSD(10);
+	if (loss)
+		print("YOU LOST!\n");
+	else
+		print("YOU WIN!\n");
+	print("\nDo you want to play another game? (1) Yes or (2) No\n");
+	while (1) {
+		int press = readKeyPad_timed(1);
+		if (press == 1) {
+			print("Do you want to play a (1) speed game or a (2) memory game?\n");
+			return; // 4 seconds for input
+		}
+		else if (press == 2) {
+			print("Goodbye\n");
+			exit(0);
+		}
+	}
+}
+
+void play_memory_game()
+{
+	int random_numbers_easy[5];
+	int random_numbers_hard[9];
+
+	int answers_easy[5];
+	int answers_hard[9];
+
+	print("(1) Easy or (2) Hard?\n");
+	int diff_select = -1;
+	while (diff_select == -1) {
+		int press = readKeyPad_timed(1);
+		if (press == 1) {
+			diff_select = 0;
+		}
+		else if (press == 2) {
+			diff_select = 1;
+		}
+	}
+
+	int arr_length = diff_select ? 9 : 5;
+	int *random_numbers = diff_select ? random_numbers_hard : random_numbers_easy;
+	int *answers = diff_select ? answers_hard : answers_easy;
+	
+	int i;
+
+	for (i = 0; i < arr_length; i++) {
+		random_numbers[i] = rand()%9 + 1;
+	}
+
+	for (i = 0; i < arr_length; i++)
+	{
+		displaySSD(random_numbers[i]);
+		uusleep(1000000);
+		displaySSD(10);
+		uusleep(10000);
+	}
+	displaySSD(10); // turn off display
+	print("Enter the sequence of numbers that you saw!\n");
+	int loss = 0;
+
+	for (i = 0; i< arr_length; i++)
+	{
+		int press = readKeyPad();
+		if (press != random_numbers[i])
+		{
+			loss = 1;
+			break;
+
+			//query_replay();
+		}
+	}
+
+	/* 	
+	for (i = 0; i < 5; i++) {
+	 	random_numbers_easy[i] = rand()%9 + 1;
+	}
+
+	for (i = 0; i < 5; i++)
+	{
+		displaySSD(random_numbers_easy[i]);
+		uusleep(1000000);
+	}
+	displaySSD(10); // turn off display
+
+	int answers[5];
+	for (i = 0; i< 5; i++)
+	{
+		int press = readKeyPad();
+		answers[i] = press;
+	}
+
+	for (i = 0; i < 5; i++)
+	{
+		if (answers[i] != random_numbers_easy[i])
+		{
+			print("WRONG ANSWERS");
+			return;
+		}
+	}
+	*/
+
+	query_replay(loss);
+	return;
+}
+
+
+void keypad_ssd_test()
+{
+	print("Press the keypad :)\n");
+	while(1)
+	{
+		int display_me = readKeyPad();
+		displaySSD(display_me);
+	}
+}
+
+//500 ~ 1 second
+int readKeyPad_timed(unsigned long long time) {
+	unsigned long long i = 0;
+	unsigned long long time_limit = 15*time;
+	while(i < time_limit) {
+		int press = readKey();
+		if (press == 17 || press == 57 || press == 59)
+		{
+			while (readKey() != 255); // one input for each key press
+			//print("Key pressed is 1\n");
+			return 1;
+		}
+		if (press == 33)
+		{
+			while (readKey() != 255);
+			//print("Key pressed is 2\n");
+			return 2;
+		}
+		if (press == 65)
+		{
+			while (readKey() != 255);
+			//print("Key pressed is 3\n");
+			return 3;
+		}
+		if (press == 18 || press == 58)
+		{
+			while (readKey() != 255);
+			//print("Key pressed is 4\n");
+			return 4;
+		}
+		if (press == 34)
+		{
+			while (readKey() != 255);
+			//print("Key pressed is 5\n");
+			return 5;
+		}
+		if (press == 66)
+		{
+			while (readKey() != 255);
+			//print("Key pressed is 6\n");
+			return 6;
+		}
+		if (press == 20)
+		{
+			while (readKey() != 255);
+			//print("Key pressed is 7\n");
+			return 7;
+		}
+		if (press == 36)
+		{
+			while (readKey() != 255);
+			//print("Key pressed is 8\n");
+			return 8;
+		}
+		if (press == 68)
+		{
+			while (readKey() != 255);
+			//print("Key pressed is 9\n");
+			return 9;
+		}
+		i++;
+	}
+	return -1;
+}
+
 
 int readKeyPad() {
 	while(1) {
 		if (readKey() == 17 || readKey() == 57 || readKey() == 59)
 		{
 			while (readKey() != 255); // one input for each key press
-			print("Key pressed is 1\n");
+			//print("Key pressed is 1\n");
 			return 1;
 		}
 		if (readKey() == 33)
 		{
 			while (readKey() != 255);
-			print("Key pressed is 2\n");
+			//print("Key pressed is 2\n");
 			return 2;
 		}
 		if (readKey() == 65)
 		{
 			while (readKey() != 255);
-			print("Key pressed is 3\n");
+			//print("Key pressed is 3\n");
 			return 3;
 		}
 		if (readKey() == 18 || readKey() == 58)
 		{
 			while (readKey() != 255);
-			print("Key pressed is 4\n");
+			//print("Key pressed is 4\n");
 			return 4;
 		}
 		if (readKey() == 34)
 		{
 			while (readKey() != 255);
-			print("Key pressed is 5\n");
+			//print("Key pressed is 5\n");
 			return 5;
 		}
 		if (readKey() == 66)
 		{
 			while (readKey() != 255);
-			print("Key pressed is 6\n");
+			//print("Key pressed is 6\n");
 			return 6;
 		}
 		if (readKey() == 20)
 		{
 			while (readKey() != 255);
-			print("Key pressed is 7\n");
+			//print("Key pressed is 7\n");
 			return 7;
 		}
 		if (readKey() == 36)
 		{
 			while (readKey() != 255);
-			print("Key pressed is 8\n");
+			//print("Key pressed is 8\n");
 			return 8;
 		}
 		if (readKey() == 68)
 		{
 			while (readKey() != 255);
-			print("Key pressed is 9\n");
+			//print("Key pressed is 9\n");
 			return 9;
 		}
 	}
@@ -191,7 +444,7 @@ int readKey() {
 	for(col = 0; col < 4; col++) {
 		int row = 0;
 		//u32 colMask = ~(1 << col);
-		u32 colMask = 0xF0 ^ (0x10 << col);
+		u32 colMask = 0xF0 ^ (0x10 << col); // Sets one of four most significant bits to zero
 		XGpio_DiscreteWrite(&KeypadGpio, 1, colMask);
 		Data = XGpio_DiscreteRead(&KeypadGpio, 1);
 		out |= ~Data & 0x0F;
@@ -245,6 +498,3 @@ void displaySSD(int x) {
 //XGpio_DiscreteWrite(&sGpio, 1, 0b00011100);
 //int G_1 = 0b00111000;
 //int G_2 = 0b00011000;
-
-//int blah = 0b00101001;
-//int blah2 = 0b00101010;
